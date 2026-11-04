@@ -16,7 +16,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import OutletSelect from '@/components/ui/OutletSelect';
 import { Input } from '@/components/ui/Field';
 import { EmptyState, ErrorBox, PageSkeleton } from '@/components/ui/States';
-import { ApprovalBadge, CategoryBadge, EmployeeCell, TableWrap } from '@/components/shared/cells';
+import { ApprovalBadge, CategoryBadge, EmployeeCell, OutletLink, TableWrap } from '@/components/shared/cells';
 
 export default function IncentivesPage() {
   const { can } = useAuth();
@@ -75,8 +75,8 @@ export default function IncentivesPage() {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="tr-hover">
-                  <td className="td"><EmployeeCell name={r.employee.name} avatar={r.employee.avatar} /></td>
-                  <td className="td">{r.outlet.name}</td>
+                  <td className="td"><EmployeeCell id={r.employee.id} name={r.employee.name} avatar={r.employee.avatar} /></td>
+                  <td className="td"><OutletLink id={r.outlet.id} name={r.outlet.name} /></td>
                   <td className="td"><CategoryBadge category={r.category} /></td>
                   <td className="td">{pct(r.achievement)}</td>
                   <td className="td font-semibold text-emerald-400">{money(r.incentive)}</td>

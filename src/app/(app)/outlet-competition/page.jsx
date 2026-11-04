@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Progress from '@/components/ui/Progress';
 import PageHeader from '@/components/ui/PageHeader';
+import { OutletLink } from '@/components/shared/cells';
 import { Input } from '@/components/ui/Field';
 import { EmptyState, ErrorBox, PageSkeleton } from '@/components/ui/States';
 import ComparisonBars from '@/components/charts/ComparisonBars';
@@ -39,7 +40,7 @@ export default function OutletCompetitionPage() {
             <Card key={o.id} className={leader?.id === o.id ? '!border-brand-500/40' : ''}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2"><h3 className="text-lg font-bold text-white">{o.name}</h3>{leader?.id === o.id && outlets.length > 1 && <Badge tone="amber">Leading</Badge>}</div>
+                  <div className="flex items-center gap-2"><h3 className="text-lg font-bold"><OutletLink id={o.id} name={o.name} className="text-white" /></h3>{leader?.id === o.id && outlets.length > 1 && <Badge tone="amber">Leading</Badge>}</div>
                   <p className="mt-1 text-xs text-slate-400">{o.records} finalized employee record{o.records === 1 ? '' : 's'}</p>
                 </div>
                 <div className={`text-3xl font-extrabold ${i % 2 ? 'text-violet-400' : 'text-brand-400'}`}>{pct(o.achievement)}</div>

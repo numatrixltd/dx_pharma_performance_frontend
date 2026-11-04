@@ -19,7 +19,7 @@ import OutletSelect from '@/components/ui/OutletSelect';
 import { EmptyState, ErrorBox, PageSkeleton } from '@/components/ui/States';
 import TrendChart from '@/components/charts/TrendChart';
 import MilestoneDonut from '@/components/charts/MilestoneDonut';
-import { AchievementCell, EmployeeCell, RankCell, TableWrap } from '@/components/shared/cells';
+import { AchievementCell, EmployeeCell, OutletLink, RankCell, TableWrap } from '@/components/shared/cells';
 
 const INSIGHT_ICON = { success: CheckCircle2, info: Info, warning: Clock, danger: AlertTriangle };
 const INSIGHT_TONE = { success: 'text-emerald-400 bg-emerald-500/12', info: 'text-brand-400 bg-brand-500/12', warning: 'text-amber-400 bg-amber-500/12', danger: 'text-rose-400 bg-rose-500/12' };
@@ -137,7 +137,7 @@ export default function DashboardPage() {
             {outletPerformance.map((o, i) => (
               <div key={o.id}>
                 <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="font-semibold text-white">{o.name}</span>
+                  <OutletLink id={o.id} name={o.name} className="font-semibold text-white" />
                   <span className="font-bold text-white">{pct(o.achievement)}</span>
                 </div>
                 <Progress value={o.achievement} tone={i % 2 ? 'violet' : 'blue'} height={9} />
@@ -189,8 +189,8 @@ export default function DashboardPage() {
               {topPerformers.map((r) => (
                 <motion.tr key={r.id} className="tr-hover" initial={false}>
                   <td className="td"><RankCell rank={r.rank} /></td>
-                  <td className="td"><EmployeeCell name={r.employee.name} avatar={r.employee.avatar} sub={r.employee.designation} /></td>
-                  <td className="td">{r.outlet.name}</td>
+                  <td className="td"><EmployeeCell id={r.employee.id} name={r.employee.name} avatar={r.employee.avatar} sub={r.employee.designation} /></td>
+                  <td className="td"><OutletLink id={r.outlet.id} name={r.outlet.name} /></td>
                   <td className="td">{money(r.sales)} <span className="text-slate-500">/ {money(r.target)}</span></td>
                   <td className="td"><AchievementCell value={r.achievement} /></td>
                   <td className="td font-semibold text-emerald-400">{money(r.incentive)}</td>

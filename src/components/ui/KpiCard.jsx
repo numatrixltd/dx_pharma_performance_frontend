@@ -6,7 +6,7 @@ import AnimatedNumber from './AnimatedNumber';
 import Sparkline from './Sparkline';
 
 const TONES = {
-  blue: ['bg-brand-500/15 text-brand-400', '#3b82f6'],
+  blue: ['bg-brand-500/15 text-brand-400', 'rgb(var(--brand-500))'],
   violet: ['bg-violet-500/15 text-violet-400', '#8b5cf6'],
   green: ['bg-emerald-500/15 text-emerald-400', '#10b981'],
   amber: ['bg-amber-500/15 text-amber-400', '#f59e0b'],

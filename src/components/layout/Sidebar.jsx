@@ -11,7 +11,7 @@ import Avatar from '@/components/ui/Avatar';
 function Brand() {
   return (
     <div className="flex items-center gap-3 px-2">
-      <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-sm font-extrabold text-white shadow-glow">DX</div>
+      <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-sm font-extrabold text-onaccent shadow-glow">DX</div>
       <div>
         <div className="text-sm font-bold tracking-wide text-white">DX Pharma</div>
         <div className="text-xs text-slate-400">Arena sales league</div>

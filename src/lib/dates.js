@@ -17,3 +17,11 @@ export function weekStart(iso) {
   return shiftDate(iso, -((day + 6) % 7)); // Monday
 }
 export const monthStart = (iso) => iso.slice(0, 8) + '01';
+
+export const currentMonth = () => todayISO().slice(0, 7);
+
+/** shiftMonth('2026-11', -1) -> '2026-10' */
+export function shiftMonth(m, n) {
+  const [y, mm] = m.split('-').map(Number);
+  return new Date(Date.UTC(y, mm - 1 + n, 1)).toISOString().slice(0, 7);
+}

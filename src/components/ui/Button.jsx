@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { Loader2 } from 'lucide-react';
 
 const VARIANTS = {
-  primary: 'bg-gradient-to-b from-brand-500 to-brand-600 text-white shadow-glow hover:from-brand-400 hover:to-brand-500',
+  primary: 'bg-gradient-to-b from-brand-500 to-brand-600 text-onaccent shadow-glow hover:from-brand-400 hover:to-brand-500',
   secondary: 'border border-ink-600 bg-ink-700/60 text-slate-200 hover:border-brand-500/60 hover:bg-ink-700',
   ghost: 'text-slate-300 hover:bg-white/5',
   danger: 'border border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20',
