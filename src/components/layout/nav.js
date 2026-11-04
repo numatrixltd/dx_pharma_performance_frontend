@@ -1,4 +1,4 @@
-import { BadgeDollarSign, Palette, BarChart3, CalendarCheck, CalendarRange, Crown, FileBarChart, LayoutDashboard, PlusSquare, Settings2, ShieldCheck, Store, Users, Wrench } from 'lucide-react';
+import { Award, BadgeDollarSign, Palette, BarChart3, CalendarCheck, CalendarRange, Crown, FileBarChart, LayoutDashboard, PlusSquare, Settings2, ShieldCheck, Store, Users, Wrench } from 'lucide-react';
 
 // `needs` is a key of the permissions object returned by /auth/me
 export const NAV = [
@@ -11,6 +11,7 @@ export const NAV = [
       { href: '/sales-entry', label: 'Daily Sales Entry', icon: PlusSquare, needs: 'canEnterSales' },
       { href: '/outlet-competition', label: 'Outlet Competition', icon: Store },
       { href: '/incentives', label: 'Incentives', icon: BadgeDollarSign },
+      { href: '/manager-incentive', label: 'Manager Incentive', icon: Award, needs: 'canViewManagerIncentive' },
       { href: '/employees', label: 'Employees', icon: Users },
       { href: '/attendance', label: 'Attendance', icon: CalendarCheck },
     ],

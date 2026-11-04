@@ -19,7 +19,7 @@ export function validateTiers(label, tiers) {
   return '';
 }
 
-export default function TierEditor({ title, tiers, onChange, disabled }) {
+export default function TierEditor({ title, tiers, onChange, disabled, allowEmpty = false }) {
   const update = (i, key, value) => onChange(tiers.map((t, j) => (j === i ? { ...t, [key]: value } : t)));
   const remove = (i) => onChange(tiers.filter((_, j) => j !== i));
   const add = () => {
@@ -43,7 +43,7 @@ export default function TierEditor({ title, tiers, onChange, disabled }) {
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">%</span>
             </div>
             <Input type="number" min="0" step="any" value={t.amount} disabled={disabled} placeholder="0" aria-label={`${title} tier ${i + 1} reward`} onChange={(e) => update(i, 'amount', e.target.value)} />
-            {!disabled && <Button size="icon" variant="ghost" className="hover:!text-rose-300" disabled={tiers.length <= 1} aria-label={`Remove tier ${i + 1}`} onClick={() => remove(i)}><Trash2 size={16} /></Button>}
+            {!disabled && <Button size="icon" variant="ghost" className="hover:!text-rose-300" disabled={!allowEmpty && tiers.length <= 1} aria-label={`Remove tier ${i + 1}`} onClick={() => remove(i)}><Trash2 size={16} /></Button>}
           </div>
         ))}
       </div>

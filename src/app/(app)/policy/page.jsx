@@ -14,6 +14,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { ErrorBox, PageSkeleton } from "@/components/ui/States";
+import SharedTierEditor from "@/components/shared/TierEditor";
 
 /** Returns an error message, or '' when the tiers are valid. */
 function validateTiers(label, tiers) {
@@ -251,22 +252,26 @@ export default function PolicyPage() {
   const { data, loading, error, reload } = useApi("/policy");
   const [senior, setSenior] = useState([]);
   const [junior, setJunior] = useState([]);
-  const [manager, setManager] = useState({
-    measure: "Not configured",
-    threshold: "",
-    reward: "",
-  });
+  const [slabs, setSlabs] = useState([]);
+  const [bonuses, setBonuses] = useState([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!data) return;
     setSenior(data.senior);
     setJunior(data.junior);
-    setManager({
-      measure: data.manager?.measure || "Not configured",
-      threshold: data.manager?.threshold ?? "",
-      reward: data.manager?.reward ?? "",
-    });
+    setSlabs(
+      (data.manager?.outletSlabs || []).map((t) => ({
+        min: t.min,
+        amount: t.amount,
+      })),
+    );
+    setBonuses(
+      (data.manager?.allOutletBonuses || []).map((t) => ({
+        min: t.min,
+        amount: t.amount,
+      })),
+    );
   }, [data]);
 
   if (!data && loading) return <PageSkeleton />;
@@ -275,7 +280,10 @@ export default function PolicyPage() {
 
   const save = async () => {
     const problem =
-      validateTiers("Senior", senior) || validateTiers("Junior", junior);
+      validateTiers("Senior", senior) ||
+      validateTiers("Junior", junior) ||
+      (slabs.length ? validateTiers("Manager outlet slabs", slabs) : "") ||
+      (bonuses.length ? validateTiers("All-outlet bonus", bonuses) : "");
     if (problem) {
       toast.error(problem);
       return;
@@ -293,7 +301,16 @@ export default function PolicyPage() {
             min: Number(t.min),
             amount: Number(t.amount),
           })),
-          manager,
+          manager: {
+            outletSlabs: slabs.map((t) => ({
+              min: Number(t.min),
+              amount: Number(t.amount),
+            })),
+            allOutletBonuses: bonuses.map((t) => ({
+              min: Number(t.min),
+              amount: Number(t.amount),
+            })),
+          },
         },
       });
       toast.success(
@@ -307,7 +324,7 @@ export default function PolicyPage() {
     }
   };
   const readOnly = !can.canManagePolicy;
-  const configured = manager.measure !== "Not configured";
+  const configured = slabs.length > 0;
 
   return (
     <div>
@@ -351,56 +368,47 @@ export default function PolicyPage() {
       <Card className="mt-5">
         <CardHeader
           title="Manager incentive policy"
-          subtitle="Separate policy. It never inherits salesperson rates automatically."
+          subtitle="Separate from salesperson rewards. Calculated monthly from each outlet's net sales against its approved monthly target (Monthly Plan)."
           action={
             <Badge tone={configured ? "green" : "amber"}>
               {configured ? "Configured" : "Pending configuration"}
             </Badge>
           }
         />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Field label="Eligibility measure">
-            <Select
-              value={manager.measure}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div>
+            <SharedTierEditor
+              title="Outlet slabs (per outlet)"
+              tiers={slabs}
+              onChange={setSlabs}
               disabled={readOnly}
-              onChange={(e) =>
-                setManager({ ...manager, measure: e.target.value })
-              }
-            >
-              <option>Not configured</option>
-              <option>Outlet target achievement</option>
-              <option>Approved custom KPI</option>
-            </Select>
-          </Field>
-          <Field label="Threshold (%)">
-            <Input
-              type="number"
-              min="0"
-              disabled={readOnly}
-              value={manager.threshold}
-              placeholder="Set after approval"
-              onChange={(e) =>
-                setManager({ ...manager, threshold: e.target.value })
-              }
+              allowEmpty
             />
-          </Field>
-          <Field label="Reward (৳)">
-            <Input
-              type="number"
-              min="0"
+            <p className="mt-2 text-xs text-slate-500">
+              Each outlet earns the highest slab its achievement reaches. For
+              example 100%+ → ৳5,000 and 120%+ → ৳8,000.
+            </p>
+          </div>
+          <div>
+            <SharedTierEditor
+              title="All-outlet bonus"
+              tiers={bonuses}
+              onChange={setBonuses}
               disabled={readOnly}
-              value={manager.reward}
-              placeholder="Set after approval"
-              onChange={(e) =>
-                setManager({ ...manager, reward: e.target.value })
-              }
+              allowEmpty
             />
-          </Field>
+            <p className="mt-2 text-xs text-slate-500">
+              An extra bonus when every active outlet reaches the same tier.
+              Leave empty for no bonus.
+            </p>
+          </div>
         </div>
-        <p className="mt-4 text-xs text-slate-500">
-          This is stored for reference only. The system does not calculate
-          manager incentives until a production policy with approval, effective
-          dates and clear role-interaction rules exists.
+        <p className="mt-5 text-xs text-slate-500">
+          With no outlet slabs the manager incentive is not configured and
+          nothing is calculated. Only admins, and manager accounts you grant
+          access to in Users &amp; Access, can see the result under Manager
+          Incentive. Settlement is recorded there by an admin; payment is never
+          automatic.
         </p>
       </Card>
 
