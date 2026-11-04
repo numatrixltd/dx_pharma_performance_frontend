@@ -53,7 +53,7 @@ export default function IncentivesPage() {
           <Button onClick={() => downloadFile('/reports/export/daily', { date, outlet }).catch((e) => toast.error(e.message))}><Download size={15} /> Export incentives</Button>
         </>} />
 
-      {!managerPolicyConfigured && <Notice tone="amber" title="Manager incentive policy is not configured.">Manager rewards stay pending configuration. Salesperson rates are never applied to managers.</Notice>}
+      {!managerPolicyConfigured && <Notice tone="amber" title="Manager incentive policy is not set up.">Add the manager slabs in Policy Settings. Salesperson rates are never applied to managers, and manager incentives are settled monthly under Manager Incentive.</Notice>}
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <OutletSelect value={outlet} onChange={setOutlet} className="!w-auto min-w-[150px]" />
