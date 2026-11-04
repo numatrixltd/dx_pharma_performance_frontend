@@ -12,7 +12,7 @@ export default function Avatar({ name = '', src, size = 36, className }) {
     return <img src={avatarUrl(src, size)} alt={name} style={style} loading="lazy" className={clsx('shrink-0 rounded-xl object-cover ring-1 ring-white/10', className)} />;
   }
   return (
-    <div style={style} className={clsx('grid shrink-0 place-items-center rounded-xl bg-gradient-to-br font-bold text-white', GRADS[hue], className)}>
+    <div style={style} className={clsx('grid shrink-0 place-items-center rounded-xl bg-gradient-to-br font-bold text-[#fff]', GRADS[hue], className)}>
       {initials(name)}
     </div>
   );

@@ -18,7 +18,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import OutletSelect from '@/components/ui/OutletSelect';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { EmptyState, ErrorBox, Skeleton } from '@/components/ui/States';
-import { EmployeeCell, TableWrap } from '@/components/shared/cells';
+import { EmployeeCell, OutletLink, TableWrap } from '@/components/shared/cells';
 
 const EMPTY = { name: '', designation: 'Sales Executive', outlet: '', category: '', dailyTarget: '', monthlyTarget: '', phone: '' };
 const TEMPLATE = 'Employee Name,Designation,Outlet,Monthly Target,Daily Target,Category\nExample Employee,Sales Executive,Panthapath,250000,10000,\n';
@@ -226,9 +226,9 @@ export default function EmployeesPage() {
               <tbody>
                 {data.map((e) => (
                   <tr key={e._id} className="tr-hover">
-                    <td className="td"><div className="flex items-center gap-2"><EmployeeCell name={e.name} avatar={e.avatar} />{!e.isActive && <Badge tone="gray">Archived</Badge>}</div></td>
+                    <td className="td"><div className="flex items-center gap-2"><EmployeeCell id={e._id} name={e.name} avatar={e.avatar} />{!e.isActive && <Badge tone="gray">Archived</Badge>}</div></td>
                     <td className="td">{e.designation}</td>
-                    <td className="td">{e.outlet?.name}</td>
+                    <td className="td"><OutletLink id={e.outlet?._id} name={e.outlet?.name} /></td>
                     <td className="td">
                       {can.canManageEmployees && e.isActive ? (
                         <Select value={e.category} onChange={(ev) => setCat(e, ev.target.value)} className="!w-36 !py-1.5 !text-xs" aria-label={`Category for ${e.name}`}><option value="">Assign category</option><option>Senior</option><option>Junior</option></Select>

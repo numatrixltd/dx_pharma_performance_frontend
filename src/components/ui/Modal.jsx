@@ -28,7 +28,7 @@ export default function Modal({ open, onClose, title, subtitle, children, footer
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
             className={clsx(
               'card relative flex max-h-[92vh] w-full flex-col rounded-b-none sm:rounded-b-2xl',
-              size === 'lg' ? 'sm:max-w-2xl' : size === 'sm' ? 'sm:max-w-sm' : 'sm:max-w-lg'
+              size === 'xl' ? 'sm:max-w-5xl' : size === 'lg' ? 'sm:max-w-2xl' : size === 'sm' ? 'sm:max-w-sm' : 'sm:max-w-lg'
             )}
           >
             <div className="flex items-start justify-between gap-3 border-b border-ink-600/60 px-5 py-4">

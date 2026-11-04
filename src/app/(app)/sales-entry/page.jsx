@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import { Lock, Search, Send, Save } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Lock, Save, Search, Send } from 'lucide-react';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -24,17 +24,19 @@ export default function SalesEntryPage() {
   const [outlet, setOutlet] = useState('');
   const [date, setDate] = useState(defaultReportDate());
   const [search, setSearch] = useState('');
-  const [values, setValues] = useState({});
+  const [values, setValues] = useState({}); // employeeId -> typed sales (string)
   const [busy, setBusy] = useState('');
   const [confirm, setConfirm] = useState(false);
   const [result, setResult] = useState(null);
+  const inputs = useRef({});
 
   const outlets = useApi('/outlets');
-  const policy = useApi('/policy');
   const active = (outlets.data || []).filter((o) => o.isActive);
   useEffect(() => { if (!outlet && active.length) setOutlet(active[0]._id); }, [active, outlet]);
 
   const sheet = useApi('/sales/sheet', { outlet, date }, { enabled: !!outlet });
+  const policy = sheet.data?.policy;
+  const quota = sheet.data?.rosterQuota ?? 4;
 
   useEffect(() => {
     if (!sheet.data) return;
@@ -49,20 +51,43 @@ export default function SalesEntryPage() {
     return (sheet.data?.rows || []).filter((r) => !q || r.employee.name.toLowerCase().includes(q));
   }, [sheet.data, search]);
 
+  const isTyped = (r) => values[r.employee.id] !== '' && values[r.employee.id] !== undefined;
+
   const calc = (r) => {
-    const v = values[r.employee.id];
-    if (v === '' || v === undefined) return null;
-    const sales = Math.max(0, Number(v));
+    if (!isTyped(r)) return null;
+    const sales = Math.max(0, Number(values[r.employee.id]));
     const ach = calcAchievement(sales, r.dailyTarget);
-    return { sales, ach, inc: r.category ? calcIncentive(r.category, ach, policy.data) : null };
+    return { sales, ach, inc: r.category ? calcIncentive(r.category, ach, policy) : null };
   };
 
   const all = sheet.data?.rows || [];
-  const filled = all.filter((r) => values[r.employee.id] !== '' && values[r.employee.id] !== undefined);
+  const filled = all.filter(isTyped);
   const totals = filled.reduce((a, r) => {
     const c = calc(r);
     return { sales: a.sales + c.sales, target: a.target + r.dailyTarget, inc: a.inc + (c.inc || 0) };
   }, { sales: 0, target: 0, inc: 0 });
+  const offCount = all.filter((r) => !isTyped(r) && r.mark === 'Off').length;
+  const absentCount = all.length - filled.length - offCount;
+
+  /** Attendance dropdown. Present = sales typed. Absent / Day off save instantly. */
+  const changeAttendance = async (r, v) => {
+    const id = r.employee.id;
+    try {
+      if (v === 'present') {
+        if (r.mark) { await api('/attendance/mark', { method: 'POST', body: { employeeId: id, date, status: 'Clear' } }); await sheet.reload(); }
+        setTimeout(() => inputs.current[id]?.focus(), 150);
+        return;
+      }
+      setValues((x) => ({ ...x, [id]: '' }));
+      const res = await api('/attendance/mark', { method: 'POST', body: { employeeId: id, date, status: v === 'off' ? 'Off' : 'Absent' } });
+      if (res.beyondQuota) toast.error(`Day off saved, but ${r.employee.name} is beyond the monthly quota (${res.offUsed}/${res.quota}). It counts as absent.`);
+      else toast.success('Attendance saved');
+      await sheet.reload();
+    } catch (e) {
+      toast.error(e.message);
+      sheet.reload();
+    }
+  };
 
   const submit = async (status) => {
     const entries = filled.map((r) => ({ employeeId: r.employee.id, sales: Number(values[r.employee.id]) }));
@@ -83,16 +108,20 @@ export default function SalesEntryPage() {
 
   if (!can.canEnterSales) return <EmptyState title="You don't have access to sales entry" message="Ask an admin to enter daily sales." />;
 
+  const usingPlan = policy?.source === 'plan';
+
   return (
     <div>
-      <PageHeader title="Daily sales entry" subtitle="Enter previous-day sales in one table, preview incentives, then save a draft or finalize." actions={<Badge tone={sheet.data?.batchStatus === 'Finalized' ? 'green' : sheet.data?.batchStatus === 'Draft' ? 'amber' : 'gray'}>{sheet.data?.batchStatus || 'Not started'}</Badge>} />
-      <Notice tone="amber" title="Workflow:">Choose outlet and date → enter actual sales → preview incentives → save draft or finalize. Drafts do not count in rankings. Finalizing locks the target, category and incentive for that day, and later corrections are audited.</Notice>
+      <PageHeader title="Daily sales entry" subtitle="Enter previous-day sales and attendance in one table, preview incentives, then save a draft or finalize." actions={<Badge tone={sheet.data?.batchStatus === 'Finalized' ? 'green' : sheet.data?.batchStatus === 'Draft' ? 'amber' : 'gray'}>{sheet.data?.batchStatus || 'Not started'}</Badge>} />
+      <Notice tone="amber" title="Workflow:">
+        Choose outlet and date → enter actual sales → preview incentives → save draft or finalize. <strong className="text-white">Attendance:</strong> entering sales marks a person present. For anyone without sales choose <em>Absent</em> or <em>Day off</em> (roster off is limited per month). A blank row counts as absent once the day has closed. Attendance marks save instantly.
+      </Notice>
+
+      {sheet.data?.outletOff && <Notice tone="blue" title="Outlet off day.">This outlet is marked off on {date}. Attendance is not counted for this date, but you can still enter sales if the outlet traded.</Notice>}
 
       <Card className="mb-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Field label="Outlet">
-            <Select value={outlet} onChange={(e) => setOutlet(e.target.value)}>{active.map((o) => <option key={o._id} value={o._id}>{o.name}</option>)}</Select>
-          </Field>
+          <Field label="Outlet"><Select value={outlet} onChange={(e) => setOutlet(e.target.value)}>{active.map((o) => <option key={o._id} value={o._id}>{o.name}</option>)}</Select></Field>
           <Field label="Sales date"><Input type="date" value={date} max={todayISO()} onChange={(e) => e.target.value && setDate(e.target.value)} /></Field>
           <Field label="Batch status"><Input readOnly value={sheet.data?.batchStatus || '—'} /></Field>
         </div>
@@ -115,30 +144,61 @@ export default function SalesEntryPage() {
           </div>
 
           <TableWrap>
-            <table className="w-full min-w-[860px]">
-              <thead><tr>{['Employee', 'Category', 'Daily target', 'Actual sales (৳)', 'Achievement', 'Incentive preview', 'Status'].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
+            <table className="w-full min-w-[1020px]">
+              <thead><tr>{['Employee', 'Category', 'Daily target', 'Attendance', 'Actual sales (৳)', 'Achievement', 'Incentive preview', 'Status'].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
               <tbody>
                 {rows.map((r) => {
+                  const id = r.employee.id;
                   const c = calc(r);
-                  const locked = r.record?.payment === 'Paid';
+                  const typed = isTyped(r);
+                  const paid = r.record?.payment === 'Paid';
+                  const att = typed ? 'present' : r.mark === 'Off' ? 'off' : 'absent';
+                  const beyond = r.mark === 'Off' && r.offUsed > quota;
+                  const sub = att === 'present' ? `Present · off used ${r.offUsed}/${quota}`
+                    : att === 'off' ? (beyond ? 'Off beyond quota · counts absent' : `Day off · off used ${r.offUsed}/${quota}`)
+                    : r.mark ? 'Absent' : sheet.data.outletOff ? 'Outlet off day' : 'Counts as absent';
                   return (
-                    <tr key={r.employee.id} className="tr-hover">
-                      <td className="td"><EmployeeCell name={r.employee.name} avatar={r.employee.avatar} sub={r.employee.designation} /></td>
+                    <tr key={id} className="tr-hover">
+                      <td className="td"><EmployeeCell id={id} name={r.employee.name} avatar={r.employee.avatar} sub={r.employee.designation} /></td>
                       <td className="td"><CategoryBadge category={r.category} /></td>
                       <td className="td">{money(r.dailyTarget)}</td>
                       <td className="td">
-                        <Input type="number" min="0" inputMode="numeric" disabled={locked} value={values[r.employee.id] ?? ''} placeholder="Enter sales" aria-label={`Sales for ${r.employee.name}`}
-                          onChange={(e) => setValues((v) => ({ ...v, [r.employee.id]: e.target.value }))} className="!w-36" />
+                        <Select
+                          value={att}
+                          disabled={!can.canMarkAttendance || !!r.record}
+                          onChange={(e) => changeAttendance(r, e.target.value)}
+                          className="!w-44 !py-1.5 !text-xs"
+                          aria-label={`Attendance for ${r.employee.name}`}
+                        >
+                          <option value="present">Present (via sales)</option>
+                          <option value="absent">Absent</option>
+                          <option value="off">Day off</option>
+                        </Select>
+                        <div className={`mt-1 text-[11px] ${att === 'absent' || beyond ? 'text-rose-300/80' : 'text-slate-500'}`}>{sub}</div>
+                      </td>
+                      <td className="td">
+                        <Input
+                          ref={(el) => { inputs.current[id] = el; }}
+                          type="number"
+                          min="0"
+                          inputMode="numeric"
+                          disabled={paid || (!!r.mark && !typed)}
+                          value={values[id] ?? ''}
+                          placeholder={r.mark === 'Off' ? 'Day off' : r.mark === 'Absent' ? 'Absent' : 'Enter sales'}
+                          aria-label={`Sales for ${r.employee.name}`}
+                          onChange={(e) => setValues((v) => ({ ...v, [id]: e.target.value }))}
+                          className="!w-36"
+                        />
                       </td>
                       <td className="td font-semibold text-white">{c ? pct(c.ach) : '—'}</td>
                       <td className="td font-semibold text-emerald-400">{c ? (r.category ? money(c.inc) : <span className="text-xs font-normal text-amber-400">Category needed</span>) : '—'}</td>
                       <td className="td">
-                        {locked ? <Badge tone="gray"><Lock size={11} /> Paid</Badge> : r.record ? <Badge tone={r.record.status === 'Finalized' ? 'green' : 'amber'}>{r.record.status}</Badge> : <span className="text-slate-500">—</span>}
+                        {paid ? <Badge tone="gray"><Lock size={11} /> Paid</Badge> : r.record ? <Badge tone={r.record.status === 'Finalized' ? 'green' : 'amber'}>{r.record.status}</Badge> : <span className="text-slate-500">—</span>}
                       </td>
                     </tr>
                   );
                 })}
-                {!rows.length && <tr><td colSpan={7}><EmptyState title="No employees match" message="Check the outlet and search, or add employees first." /></td></tr>}
+                {!rows.length && <tr><td colSpan={8}><EmptyState title="No employees match" message="Check the outlet and search, or add employees first." /></td></tr>}
               </tbody>
             </table>
           </TableWrap>
@@ -148,6 +208,8 @@ export default function SalesEntryPage() {
             <span>Entered sales: <strong className="text-white">{money(totals.sales)}</strong></span>
             <span>Potential target: <strong className="text-white">{money(totals.target)}</strong></span>
             <span>Preview incentives: <strong className="text-emerald-400">{money(totals.inc)}</strong></span>
+            <span>Absent: <strong className="text-rose-300">{absentCount}</strong> · Day off: <strong className="text-brand-300">{offCount}</strong></span>
+            <span className="sm:ml-auto">Incentive tiers: <strong className={usingPlan ? 'text-amber-300' : 'text-white'}>{usingPlan ? 'Monthly plan' : 'Default policy'}</strong></span>
           </div>
 
           {result && (
@@ -165,7 +227,7 @@ export default function SalesEntryPage() {
       )}
 
       <ConfirmDialog open={confirm} tone="primary" title="Finalize this batch?" confirmLabel="Finalize" loading={busy === 'Finalized'} onClose={() => setConfirm(false)} onConfirm={() => submit('Finalized')}
-        message={`This finalizes ${filled.length} sales record${filled.length === 1 ? '' : 's'} for ${date}. Targets, categories and incentives are locked in and will count in rankings. Later corrections are audited.`} />
+        message={`This finalizes ${filled.length} sales record${filled.length === 1 ? '' : 's'} for ${date}. Targets, categories and incentives are locked in and count in rankings. ${absentCount} employee${absentCount === 1 ? '' : 's'} without sales will count as absent${offCount ? ` and ${offCount} as day off` : ''}. Later corrections are audited.`} />
     </div>
   );
 }

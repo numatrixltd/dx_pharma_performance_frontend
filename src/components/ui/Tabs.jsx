@@ -13,7 +13,7 @@ export default function Tabs({ options, value, onChange }) {
           onClick={() => onChange(o.value)}
           className={clsx(
             'whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-semibold transition',
-            value === o.value ? 'bg-brand-600 text-white shadow-glow' : 'text-slate-400 hover:text-white'
+            value === o.value ? 'bg-brand-600 text-onaccent shadow-glow' : 'text-slate-400 hover:text-white'
           )}
         >
           {o.label}

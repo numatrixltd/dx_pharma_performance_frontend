@@ -49,6 +49,10 @@ export default function PerformancePage() {
   );
 
   const exportView = () => downloadFile('/reports/export/performance', { start, end, outlet }).catch((e) => toast.error(e.message));
+  // `data` can briefly be the previous report (e.g. team data right after switching to "person").
+  // Always render from the loaded report's own mode, and wait until it matches the selected one.
+  const stale = !!data && data.mode !== mode;
+  const isPerson = data?.mode === 'person';
   const s = data?.summary || {};
   const k = data?.kpis;
 
@@ -78,23 +82,23 @@ export default function PerformancePage() {
       </Card>
 
       {error && !data && <ErrorBox message={error} onRetry={reload} />}
-      {!data && loading && <PageSkeleton />}
+      {(!data || stale) && loading && <PageSkeleton />}
 
-      {data && k && (
+      {data && !stale && k && (
         <>
           <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard animate={false} label={mode === 'person' ? 'Period sales' : 'Team sales'} icon={Wallet} tone="blue" value={k.sales} format={(n) => money(n)} foot={`${data.days} calendar day${data.days === 1 ? '' : 's'} selected`} />
-            <KpiCard animate={false} label="Period target" icon={Target} tone="violet" value={k.target} format={(n) => money(n)} foot="Daily target × calendar days" />
-            <KpiCard animate={false} label="Achievement" icon={TrendingUp} tone="green" value={k.achievement} format={(n) => pct(n)} foot={mode === 'person' ? `${k.daysReported} of ${data.days} days reported` : 'Against selected period targets'} />
+            <KpiCard animate={false} label={isPerson ? 'Period sales' : 'Team sales'} icon={Wallet} tone="blue" value={k.sales} format={(n) => money(n)} foot={`${data.days} calendar day${data.days === 1 ? '' : 's'} selected`} />
+            <KpiCard animate={false} label="Period target" icon={Target} tone="violet" value={k.target} format={(n) => money(n)} foot="Daily target × working days (outlet off days excluded)" />
+            <KpiCard animate={false} label="Achievement" icon={TrendingUp} tone="green" value={k.achievement} format={(n) => pct(n)} foot={isPerson ? `${k.daysReported} of ${data.days} days reported` : 'Against selected period targets'} />
             <KpiCard animate={false} label="Incentives earned" icon={BadgeDollarSign} tone="amber" value={k.incentive} format={(n) => money(n)} foot="Daily rewards summed · pending approval" />
           </div>
 
           <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2 sm:gap-5">
             <Card>
-              <CardHeader title={mode === 'person' ? 'Daily achievement' : 'Achievement by salesperson'} subtitle="Period sales ÷ period target" />
+              <CardHeader title={isPerson ? 'Daily achievement' : 'Achievement by salesperson'} subtitle="Period sales ÷ period target" />
               <div className="space-y-4">
-                {mode === 'person'
-                  ? data.daily.map((d) => (
+                {isPerson
+                  ? (data.daily || []).map((d) => (
                       <div key={d.date} className="grid grid-cols-[64px_1fr_56px] items-center gap-3 text-xs">
                         <span className="font-medium text-slate-300">{shortDate(d.date)}</span>
                         <Progress value={(d.achievement / Math.max(100, d.achievement)) * 100} tone={barTone(d.achievement)} height={8} />
@@ -111,14 +115,14 @@ export default function PerformancePage() {
                         </div>
                       );
                     })}
-                {((mode === 'person' && !data.daily.length) || (mode === 'team' && !data.rows.length)) && <EmptyState title="No finalized records" message="Choose a different period or finalize sales for these dates." />}
+                {((isPerson && !(data.daily || []).length) || (!isPerson && !data.rows.length)) && <EmptyState title="No finalized records" message="Choose a different period or finalize sales for these dates." />}
               </div>
             </Card>
 
             <Card>
-              <CardHeader title={mode === 'person' ? 'Salesperson summary' : 'Period summary'} subtitle="Sales, target, incentives and coverage" />
+              <CardHeader title={isPerson ? 'Salesperson summary' : 'Period summary'} subtitle="Sales, target, incentives and coverage" />
               <dl className="space-y-3.5 text-sm">
-                {(mode === 'person'
+                {(isPerson
                   ? [
                       ['Salesperson', s.salesperson],
                       ['Outlet / category', s.outlet ? `${s.outlet} · ${s.category}` : '—'],
@@ -143,7 +147,7 @@ export default function PerformancePage() {
 
           <Card pad={false} className="overflow-hidden">
             <div className="flex items-center justify-between gap-3 px-5 py-4">
-              <h3 className="text-sm font-semibold text-white">{mode === 'person' ? 'Salesperson period result' : 'Period leaderboard'}</h3>
+              <h3 className="text-sm font-semibold text-white">{isPerson ? 'Salesperson period result' : 'Period leaderboard'}</h3>
               <Badge tone="blue">Ranked by achievement %</Badge>
             </div>
             <TableWrap>
@@ -153,9 +157,9 @@ export default function PerformancePage() {
                   {data.rows.map((r) => (
                     <tr key={r.employee.id} className="tr-hover">
                       <td className="td"><RankCell rank={r.rank} /></td>
-                      <td className="td"><EmployeeCell name={r.employee.name} avatar={r.employee.avatar} sub={r.category || 'Category unassigned'} /></td>
+                      <td className="td"><EmployeeCell id={r.employee.id} name={r.employee.name} avatar={r.employee.avatar} sub={r.category || 'Category unassigned'} /></td>
                       <td className="td">{r.outlet}</td>
-                      <td className="td">{r.daysReported} / {data.days}</td>
+                      <td className="td">{r.daysReported} / {r.workingDays ?? data.days}</td>
                       <td className="td font-semibold text-white">{money(r.sales)}</td>
                       <td className="td">{money(r.target)}</td>
                       <td className="td"><AchievementCell value={r.achievement} /></td>

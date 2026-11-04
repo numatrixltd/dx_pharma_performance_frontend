@@ -16,3 +16,9 @@ export function greeting() {
   const h = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Dhaka' }).format(new Date()));
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 }
+
+/** '2026-11' -> 'Nov 2026' */
+export function monthLabel(m) {
+  if (!m) return '';
+  return new Date(m + '-01T12:00:00').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+}

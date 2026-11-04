@@ -2,23 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
+/* Default theme (Arena Dark). The theme engine overwrites these at runtime; see src/lib/theme.js */
+:root {
+  color-scheme: dark;
+  --ink-950: 5 9 20;
+  --ink-500: 20 43 83;
+  --ink-600: 14 30 59;
+  --ink-700: 10 21 42;
+  --ink-800: 8 16 33;
+  --ink-850: 7 13 28;
+  --ink-900: 6 11 24;
+  --slate-50: 248 250 252;
+  --slate-100: 238 240 243;
+  --slate-200: 224 226 229;
+  --slate-300: 195 197 201;
+  --slate-400: 156 158 164;
+  --slate-500: 122 125 131;
+  --slate-600: 88 91 99;
+  --slate-700: 58 62 71;
+  --slate-800: 34 38 48;
+  --slate-900: 20 23 34;
+  --brand-300: 154 185 236;
+  --brand-400: 103 149 226;
+  --brand-600: 43 93 177;
+  --brand-700: 32 71 134;
+  --brand-500: 52 114 216;
+  --c-accent: 52 114 216;
+  --c-text: 248 250 252;
+  --c-onaccent: 255 255 255;
+  --r-scale: 1;
+}
+[data-mode='light'] { color-scheme: light; }
+
+/* Keeps a section (the gold top-performer hero) in the dark palette on light themes */
+.force-dark {
+  --slate-50: 248 250 252;
+  --slate-100: 238 240 243;
+  --slate-200: 224 226 229;
+  --slate-300: 195 197 201;
+  --slate-400: 156 158 164;
+  --slate-500: 122 125 131;
+  --slate-600: 88 91 99;
+  --slate-700: 58 62 71;
+  --slate-800: 34 38 48;
+  --slate-900: 20 23 34;
+  --c-text: 248 250 252;
+}
+
 html, body { min-height: 100%; }
 
 body {
   @apply bg-ink-950 text-slate-200 antialiased font-sans;
   background-image:
-    radial-gradient(1100px 560px at 8% -8%, rgba(37, 99, 235, 0.16), transparent 60%),
+    radial-gradient(1100px 560px at 8% -8%, rgb(var(--brand-600) / 0.16), transparent 60%),
     radial-gradient(900px 520px at 100% 100%, rgba(139, 92, 246, 0.11), transparent 60%);
   background-attachment: fixed;
 }
+[data-mode='light'] body {
+  background-image:
+    radial-gradient(1100px 560px at 8% -8%, rgb(var(--brand-500) / 0.1), transparent 60%),
+    radial-gradient(900px 520px at 100% 100%, rgb(var(--brand-500) / 0.05), transparent 60%);
+}
 
-::selection { background: rgba(59, 130, 246, 0.4); }
-* { scrollbar-width: thin; scrollbar-color: #26365a transparent; }
+::selection { background: rgb(var(--brand-500) / 0.4); }
+* { scrollbar-width: thin; scrollbar-color: rgb(var(--ink-500)) transparent; }
 *::-webkit-scrollbar { height: 8px; width: 8px; }
-*::-webkit-scrollbar-thumb { background: #26365a; border-radius: 8px; }
+*::-webkit-scrollbar-thumb { background: rgb(var(--ink-500)); border-radius: 8px; }
 
-:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
+:focus-visible { outline: 2px solid rgb(var(--brand-400)); outline-offset: 2px; }
+
+/* Status colours need darker shades on light themes to stay readable (not inside .force-dark) */
+[data-mode='light'] .text-emerald-200:not(.force-dark *),
+[data-mode='light'] .text-emerald-300:not(.force-dark *),
+[data-mode='light'] .text-emerald-400:not(.force-dark *) { color: #047857; }
+[data-mode='light'] .text-rose-200:not(.force-dark *),
+[data-mode='light'] .text-rose-300:not(.force-dark *),
+[data-mode='light'] .text-rose-400:not(.force-dark *) { color: #be123c; }
+[data-mode='light'] .text-amber-100:not(.force-dark *),
+[data-mode='light'] .text-amber-200:not(.force-dark *),
+[data-mode='light'] .text-amber-300:not(.force-dark *),
+[data-mode='light'] .text-amber-400:not(.force-dark *) { color: #b45309; }
+[data-mode='light'] .text-violet-300:not(.force-dark *),
+[data-mode='light'] .text-violet-400:not(.force-dark *) { color: #6d28d9; }
+[data-mode='light'] .text-cyan-300:not(.force-dark *),
+[data-mode='light'] .text-cyan-400:not(.force-dark *) { color: #0e7490; }
+[data-mode='light'] .text-orange-200:not(.force-dark *),
+[data-mode='light'] .text-orange-300:not(.force-dark *),
+[data-mode='light'] .text-orange-400:not(.force-dark *) { color: #c2410c; }
+[data-mode='light'] .card { box-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 10px 28px -14px rgb(15 23 42 / 0.2); }
+[data-mode='light'] .bg-black\/70 { background-color: rgb(15 23 42 / 0.45); }
 
 @layer components {
   .card {

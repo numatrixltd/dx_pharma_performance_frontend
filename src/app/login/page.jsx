@@ -46,7 +46,7 @@ export default function LoginPage() {
         <div className="pointer-events-none absolute -left-24 top-1/3 h-[420px] w-[420px] rounded-full bg-brand-600/25 blur-[110px]" />
         <div className="pointer-events-none absolute bottom-0 right-0 h-[360px] w-[360px] rounded-full bg-violet-600/20 blur-[110px]" />
         <div className="relative flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 font-extrabold text-white shadow-glow">DX</div>
+          <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 font-extrabold text-onaccent shadow-glow">DX</div>
           <div>
             <div className="font-bold text-white">DX Pharma</div>
             <div className="text-xs text-slate-400">Arena sales league</div>
