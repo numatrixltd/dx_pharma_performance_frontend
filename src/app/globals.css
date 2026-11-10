@@ -107,3 +107,30 @@ body {
   .td { @apply whitespace-nowrap border-t border-ink-600/50 px-4 py-3.5 text-sm text-slate-300; }
   .tr-hover { @apply transition-colors hover:bg-brand-500/[0.04]; }
 }
+
+
+/* ---------- Printing / Save as PDF: only .print-report, on a light palette ---------- */
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  :root {
+    --c-text: 15 23 42 !important;
+    --slate-50: 15 23 42 !important; --slate-100: 30 41 59 !important; --slate-200: 51 65 85 !important; --slate-300: 71 85 105 !important;
+    --slate-400: 100 116 139 !important; --slate-500: 100 116 139 !important; --slate-600: 148 163 184 !important; --slate-700: 203 213 225 !important;
+    --slate-800: 226 232 240 !important; --slate-900: 241 245 249 !important;
+    --ink-950: 255 255 255 !important; --ink-900: 248 250 252 !important; --ink-850: 255 255 255 !important; --ink-800: 255 255 255 !important;
+    --ink-700: 241 245 249 !important; --ink-600: 203 213 225 !important; --ink-500: 148 163 184 !important;
+    --brand-300: 29 78 216 !important; --brand-400: 29 78 216 !important; --brand-500: 37 99 235 !important;
+  }
+  html, body { background: #fff !important; background-image: none !important; height: auto !important; }
+  body * { visibility: hidden; }
+  .print-report, .print-report * { visibility: visible; }
+  .print-report { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; border-color: #cbd5e1 !important; }
+  .print-report * { box-shadow: none !important; backdrop-filter: none !important; }
+  .print-report .overflow-x-auto { overflow: visible !important; }
+  .print-report .sticky { position: static !important; }
+  .print-report tr { break-inside: avoid; }
+  .print-report .text-rose-400, .print-report .text-rose-300 { color: #be123c !important; }
+  .print-report .text-emerald-400, .print-report .text-emerald-300 { color: #047857 !important; }
+  .print-report .text-amber-300, .print-report .text-amber-400 { color: #b45309 !important; }
+  .no-print { display: none !important; }
+}
