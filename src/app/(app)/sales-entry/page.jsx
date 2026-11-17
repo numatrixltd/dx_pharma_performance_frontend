@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Lock, Save, Search, Send } from 'lucide-react';
+import { Lock, Save, Search, Send, Upload } from 'lucide-react';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -17,6 +17,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { EmptyState, ErrorBox, Skeleton } from '@/components/ui/States';
 import { CategoryBadge, EmployeeCell, TableWrap } from '@/components/shared/cells';
+import BulkSalesModal from '@/components/sales/BulkSalesModal';
 
 export default function SalesEntryPage() {
   const { can } = useAuth();
@@ -28,6 +29,7 @@ export default function SalesEntryPage() {
   const [busy, setBusy] = useState('');
   const [confirm, setConfirm] = useState(false);
   const [result, setResult] = useState(null);
+  const [bulk, setBulk] = useState(false);
   const inputs = useRef({});
 
   const outlets = useApi('/outlets');
@@ -112,7 +114,7 @@ export default function SalesEntryPage() {
 
   return (
     <div>
-      <PageHeader title="Daily sales entry" subtitle="Enter previous-day sales and attendance in one table, preview incentives, then save a draft or finalize." actions={<Badge tone={sheet.data?.batchStatus === 'Finalized' ? 'green' : sheet.data?.batchStatus === 'Draft' ? 'amber' : 'gray'}>{sheet.data?.batchStatus || 'Not started'}</Badge>} />
+      <PageHeader title="Daily sales entry" subtitle="Enter previous-day sales and attendance in one table, preview incentives, then save a draft or finalize." actions={<><Button onClick={() => setBulk(true)}><Upload size={15} /> Bulk upload</Button><Badge tone={sheet.data?.batchStatus === 'Finalized' ? 'green' : sheet.data?.batchStatus === 'Draft' ? 'amber' : 'gray'}>{sheet.data?.batchStatus || 'Not started'}</Badge></>} />
       <Notice tone="amber" title="Workflow:">
         Choose outlet and date → enter actual sales → preview incentives → save draft or finalize. <strong className="text-white">Attendance:</strong> entering sales marks a person present. For anyone without sales choose <em>Absent</em> or <em>Day off</em> (roster off is limited per month). A blank row counts as absent once the day has closed. Attendance marks save instantly.
       </Notice>
@@ -225,6 +227,8 @@ export default function SalesEntryPage() {
           </div>
         </Card>
       )}
+
+      <BulkSalesModal open={bulk} onClose={() => setBulk(false)} outletName={active.find((o) => o._id === outlet)?.name || ''} date={date} employees={(sheet.data?.rows || []).map((r) => ({ name: r.employee.name, category: r.category }))} canFinalize={!!can.canFinalizeSales} onDone={() => sheet.reload()} />
 
       <ConfirmDialog open={confirm} tone="primary" title="Finalize this batch?" confirmLabel="Finalize" loading={busy === 'Finalized'} onClose={() => setConfirm(false)} onConfirm={() => submit('Finalized')}
         message={`This finalizes ${filled.length} sales record${filled.length === 1 ? '' : 's'} for ${date}. Targets, categories and incentives are locked in and count in rankings. ${absentCount} employee${absentCount === 1 ? '' : 's'} without sales will count as absent${offCount ? ` and ${offCount} as day off` : ''}. Later corrections are audited.`} />
